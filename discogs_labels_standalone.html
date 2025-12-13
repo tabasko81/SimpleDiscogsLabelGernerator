@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Simple Discogs Label Generator</title>
+  <style>
+    /* App UI (slim, moderno) */
+    :root {
+      --bg: #fafafa;
+      --card: #ffffff;
+      --text: #1a1a1a;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --shadow: 0 1px 10px rgba(0,0,0,0.05);
+      --accent: #111827;
+      --danger: #b91c1c;
+      --ok: #047857;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    a { color: inherit; }
+    .app {
+      max-width: 1100px;
+      margin: 18px auto;
+      padding: 0 14px;
+      display: grid;
+      grid-template-columns: 420px 1fr;
+      gap: 14px;
+      align-items: start;
+    }
+    @media (max-width: 980px) {
+      .app { grid-template-columns: 1fr; }
+    }
+    .panel {
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .panelHeader {
+      padding: 14px 14px 10px 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .titleRow {
+      display: flex;
+      gap: 10px;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+    .title {
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: -0.2px;
+    }
+    .subtitle {
+      margin-top: 6px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+    .panelBody { padding: 14px; }
+    .row { display: flex; gap: 10px; }
+    .row > * { flex: 1; }
+    .field { margin-bottom: 12px; }
+    label {
+      display: block;
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input[type="text"], input[type="password"], input[type="number"] {
+      width: 100%;
+      border: 1px solid var(--border);
+      background: white;
+      padding: 10px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+    input[type="text"]:focus, input[type="password"]:focus, input[type="number"]:focus {
+      border-color: #cbd5e1;
+      box-shadow: 0 0 0 3px rgba(148,163,184,0.25);
+    }
+    .hint {
+      margin-top: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+    .btnRow { display: flex; gap: 10px; flex-wrap: wrap; }
+    button {
+      border: 1px solid var(--border);
+      background: white;
+      color: var(--text);
+      padding: 10px 10px;
+      border-radius: 8px;
+      font-size: 13px;
+      cursor: pointer;
+      transition: transform 0.05s ease, background-color 0.15s ease, border-color 0.15s ease;
+      user-select: none;
+    }
+    button.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+    button:active { transform: translateY(1px); }
+    .status {
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+    .status .ok { color: var(--ok); font-weight: 600; }
+    .status .err { color: var(--danger); font-weight: 600; }
+    .split {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      margin: 6px 0 10px 0;
+    }
+    .smallBtns { display: flex; gap: 8px; }
+    .searchBox { margin-top: 10px; }
+    .list {
+      max-height: 430px;
+      overflow: auto;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+    .listItem {
+      display: block;
+      padding: 10px 10px;
+      border-bottom: 1px solid #f3f4f6;
+      cursor: pointer;
+      user-select: none;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    .listItem:hover {
+      background: #fafafa;
+    }
+    .listItem:last-child { border-bottom: none; }
+    .listItem.selected {
+      background: rgba(17, 24, 39, 0.06);
+      outline: 1px solid rgba(17, 24, 39, 0.12);
+    }
+    .listTitle { font-size: 13px; font-weight: 600; line-height: 1.3; }
+    .listMeta { margin-top: 3px; font-size: 11px; color: var(--muted); line-height: 1.3; }
+    .pill {
+      display: inline-block;
+      padding: 2px 8px;
+      border: 1px solid var(--border);
+      border-radius: 999px;
+      font-size: 11px;
+      color: var(--muted);
+      background: #fff;
+      margin-left: 8px;
+      vertical-align: middle;
+    }
+
+    /* Labels (impressão) – baseado no design slim atual do projecto */
+    .labelsRoot {
+      background: var(--card);
+      border: 1px solid var(--border);
+      box-shadow: var(--shadow);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .labelsHeader {
+      padding: 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .labelsHeader .left { display: flex; gap: 10px; align-items: baseline; }
+    .labelsHeader .count { font-size: 12px; color: var(--muted); }
+    .labelsBody { padding: 0; }
+
+    /* Output: lista vertical contínua */
+    .labelsStack {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .labelCard {
+      background: white;
+      border: 1px solid #e9edf3;
+      border-radius: 12px;
+      box-shadow: 0 1px 10px rgba(0,0,0,0.04);
+      padding: 14px 16px;
+      overflow: hidden;
+    }
+    .label {
+      display: flex;
+      gap: 20px;
+    }
+    .label-cover {
+      flex-shrink: 0;
+      width: 150px;
+      height: 150px;
+    }
+    .label-cover img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 4px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      background: #f3f4f6;
+    }
+    .label-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+      min-width: 0;
+    }
+    .label-header {
+      font-weight: 600;
+      font-size: 16px;
+      margin-bottom: 4px;
+      color: #1a1a1a;
+      letter-spacing: -0.3px;
+    }
+    .label-title {
+      font-size: 13px;
+      margin-bottom: 15px;
+      color: #666;
+      font-weight: 400;
+    }
+    .label-table {
+      font-size: 11px;
+      margin: 10px 0;
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .label-table td {
+      padding: 5px 8px;
+      vertical-align: middle;
+    }
+    .label-table tr {
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .label-table tr:last-child { border-bottom: none; }
+    .track-position {
+      font-weight: 500;
+      color: #888;
+      font-size: 10px;
+      width: 30px;
+      white-space: nowrap;
+    }
+    .track-title {
+      color: #1a1a1a;
+      font-weight: 400;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 520px;
+    }
+    .track-duration {
+      color: #888;
+      font-size: 10px;
+      white-space: nowrap;
+      text-align: right;
+      width: 52px;
+    }
+    .label-footer {
+      font-size: 9px;
+      margin-top: auto;
+      padding-top: 12px;
+      border-top: 1px solid #f0f0f0;
+      color: #888;
+      line-height: 1.5;
+    }
+    .label-footer strong { color: #1a1a1a; font-weight: 600; }
+    .label-footer em { color: #666; font-style: normal; }
+    .qr-code {
+      position: absolute;
+      top: 0;
+      right: 0;
+      width: 45px;
+      height: 45px;
+      opacity: 0.9;
+      image-rendering: pixelated;
+    }
+    .coverPlaceholder {
+      width: 100%;
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(135deg, #f3f4f6, #e5e7eb);
+    }
+
+    @media print {
+      body { background: white; }
+      /* Don't hide the entire app (labels are inside). Hide only the controls panel. */
+      #controlsPanel { display: none !important; }
+      .app {
+        display: block !important;
+        max-width: none !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+      .labelsRoot { border: none; box-shadow: none; }
+      .labelsHeader { display: none; }
+      .labelsStack { padding: 0; gap: 10px; }
+      .labelCard {
+        box-shadow: none;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 12px 14px;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+    }
+
+    /* Loading */
+    .statusRow {
+      display: flex;
+      gap: 10px;
+      align-items: flex-start;
+      margin-top: 12px;
+    }
+    .spinner {
+      width: 14px;
+      height: 14px;
+      border-radius: 999px;
+      border: 2px solid #e5e7eb;
+      border-top-color: #111827;
+      animation: spin 0.8s linear infinite;
+      display: none;
+      margin-top: 2px;
+      flex: 0 0 auto;
+    }
+    .busy .spinner { display: inline-block; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.4/build/qrcode.min.js"></script>
+</head>
+<body>
+  <div class="app">
+    <section class="panel" id="controlsPanel" aria-label="Controls">
+      <div class="panelHeader">
+        <div class="titleRow">
+          <div class="title">Simple Discogs Label Generator</div>
+          <span class="pill">no server</span>
+        </div>
+        <div class="subtitle">
+          Enter your Discogs token, load your collection, and generate printable HTML labels.
+        </div>
+      </div>
+      <div class="panelBody">
+        <div class="field">
+          <label for="token">Discogs token</label>
+          <input id="token" type="password" placeholder="paste your token here (Personal Access Token)" autocomplete="off" />
+          <div class="hint">Generate one at `https://www.discogs.com/settings/developers`.</div>
+        </div>
+
+        <div class="field">
+          <label for="corsProxy">CORS proxy (optional)</label>
+          <input id="corsProxy" type="text" placeholder="e.g. https://corsproxy.io/?" autocomplete="off" />
+          <div class="hint">
+            If your browser blocks requests due to CORS, add a proxy prefix (e.g. `https://corsproxy.io/?`).
+            If it works without a proxy, leave this empty.
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="perPage">Per page (API)</label>
+            <input id="perPage" type="number" min="25" max="100" value="100" />
+          </div>
+          <div class="field">
+            <label for="maxReleases">Max releases (0 = all)</label>
+            <input id="maxReleases" type="number" min="0" value="0" />
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="requestDelay">Delay between requests (ms)</label>
+            <input id="requestDelay" type="number" min="0" value="1200" />
+            <div class="hint">If you use a CORS proxy, you may need to increase this (e.g. 2000–4000ms).</div>
+          </div>
+          <div class="field">
+            <label>Options</label>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:2px;">
+              <label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--text);font-size:12px;">
+                <input id="includeTracklist" type="checkbox" checked />
+                Include tracklist (slower; 1 request per release)
+              </label>
+              <label style="display:flex;gap:8px;align-items:center;margin:0;color:var(--text);font-size:12px;">
+                <input id="stopOnError" type="checkbox" />
+                Stop on first error (default: continue and skip the release)
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="btnRow">
+          <button id="btnStart" class="primary">Verify token + Load collection</button>
+          <button id="btnGenerate" class="primary">Generate labels</button>
+          <button id="btnExport">Export HTML</button>
+        </div>
+
+        <div class="statusRow" id="statusRow">
+          <div class="spinner" aria-hidden="true"></div>
+          <div class="status" id="status"></div>
+        </div>
+
+        <div class="split" style="margin-top:14px;">
+          <div style="font-size:12px;color:var(--muted);">
+            Releases: <span id="releaseCount">0</span>
+            <span class="pill" id="selectedCount">0 selected</span>
+          </div>
+          <div class="smallBtns">
+            <button id="btnAll">Select visible</button>
+            <button id="btnNone">Clear</button>
+          </div>
+        </div>
+
+        <div class="field searchBox">
+          <label for="filter">Filter</label>
+          <input id="filter" type="text" placeholder="filter by artist/title/year/label... (use ; to separate)" />
+          <div class="hint">Example: <code>2001; 2002; Guetta</code> shows items matching any of those terms.</div>
+        </div>
+
+        <div class="list" id="releaseList" aria-label="Release list"></div>
+      </div>
+    </section>
+
+    <section class="labelsRoot" aria-label="Generated labels">
+      <div class="labelsHeader">
+        <div class="left">
+          <div class="title">Preview</div>
+          <div class="count" id="outputCount">0 labels</div>
+        </div>
+        <div class="count">Tip: use Ctrl+P to print.</div>
+      </div>
+      <div class="labelsBody">
+        <div class="labelsStack" id="output"></div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    // State
+    const state = {
+      token: "",
+      corsProxy: "",
+      identity: null, // {username, id}
+      releases: [],   // collection release items
+      selected: new Set(), // releaseId
+      generatedHtml: "",   // HTML labels (inner)
+      lastError: null,
+      isBusy: false,
+    };
+
+    // UI helpers
+    const $ = (id) => document.getElementById(id);
+    const setBusy = (busy) => {
+      state.isBusy = busy;
+      $("btnStart").disabled = busy;
+      $("btnGenerate").disabled = busy;
+      $("btnExport").disabled = busy || !state.generatedHtml;
+      $("btnAll").disabled = busy || state.releases.length === 0;
+      $("btnNone").disabled = busy || state.releases.length === 0;
+      const row = $("statusRow");
+      if (busy) row.classList.add("busy");
+      else row.classList.remove("busy");
+    };
+    const setStatus = (msg, kind = "info") => {
+      const el = $("status");
+      if (kind === "ok") el.innerHTML = `<span class="ok">${escapeHtml(msg)}</span>`;
+      else if (kind === "err") el.innerHTML = `<span class="err">${escapeHtml(msg)}</span>`;
+      else el.textContent = msg;
+    };
+    const escapeHtml = (s) => (s ?? "").toString()
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#039;");
+
+    const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+    // CORS proxy prefix (optional)
+    const withProxy = (url) => {
+      const p = (state.corsProxy || "").trim();
+      if (!p) return url;
+      return p + encodeURIComponent(url);
+    };
+
+    // Discogs fetch
+    async function discogsFetchJson(url, opts = {}) {
+      const finalUrl = withProxy(url);
+      const token = state.token;
+      const maxRetries = Number.isFinite(opts.maxRetries) ? opts.maxRetries : 5;
+      const baseDelayMs = Number.isFinite(opts.baseDelayMs) ? opts.baseDelayMs : 1200;
+
+      let lastErr = null;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const res = await fetch(finalUrl, {
+            method: "GET",
+            headers: {
+              "Authorization": `Discogs token=${token}`,
+              "User-Agent": "DiscogsLabelGenStandalone/1.0 (+https://example.local)",
+              "Accept": "application/vnd.discogs.v2+json",
+            }
+          });
+
+          // 429 (rate limit) - respect Retry-After if present
+          if (res.status === 429) {
+            const retryAfter = Number(res.headers.get("Retry-After") || "0");
+            const waitMs = retryAfter > 0 ? retryAfter * 1000 : Math.min(15000, baseDelayMs * (attempt + 2));
+            const body = await res.text().catch(() => "");
+            lastErr = new Error(`HTTP 429 (rate limit). Waiting ${waitMs}ms. ${body.slice(0, 120)}`);
+            await sleep(waitMs);
+            continue;
+          }
+
+          if (!res.ok) {
+            const text = await res.text().catch(() => "");
+            // retry on 5xx
+            if (res.status >= 500 && attempt < maxRetries) {
+              const waitMs = Math.min(15000, baseDelayMs * (attempt + 2));
+              lastErr = new Error(`HTTP ${res.status}. Retrying in ${waitMs}ms. ${text.slice(0, 120)}`);
+              await sleep(waitMs);
+              continue;
+            }
+            throw new Error(`HTTP ${res.status} ${res.statusText} — ${text.slice(0, 300)}`);
+          }
+
+          return await res.json();
+        } catch (e) {
+          // Network/CORS/proxy error: TypeError("Failed to fetch")
+          lastErr = e;
+          if (attempt >= maxRetries) break;
+          const waitMs = Math.min(15000, baseDelayMs * (attempt + 2));
+          await sleep(waitMs);
+        }
+      }
+
+      const proxyMsg = state.corsProxy
+        ? "This looks like a proxy/CORS failure. Try removing the proxy (if not needed) or increasing the delay."
+        : "This looks like a CORS/network issue. If you see CORS errors in the console, try a CORS proxy (field above) or another browser.";
+      const errMsg = lastErr?.message || String(lastErr);
+      throw new Error(`${errMsg}\nURL: ${url}\n${proxyMsg}`);
+    }
+
+    async function loadIdentity() {
+      state.token = $("token").value.trim();
+      state.corsProxy = $("corsProxy").value.trim();
+      if (!state.token) {
+        setStatus("Token is missing.", "err");
+        return;
+      }
+      try {
+        setStatus("Verifying token (oauth/identity)...");
+        const data = await discogsFetchJson("https://api.discogs.com/oauth/identity");
+        state.identity = { username: data.username, id: data.id };
+        setStatus(`Token OK. User: ${data.username} (id ${data.id}).`, "ok");
+      } catch (e) {
+        state.identity = null;
+        setStatus(`Token verification failed: ${e.message}`, "err");
+      }
+    }
+
+    function releaseTitleForList(item) {
+      const basic = item.basic_information || {};
+      const artists = (basic.artists || []).map(a => a.name).filter(Boolean).join(", ");
+      const title = basic.title || "Sem título";
+      const year = basic.year ? String(basic.year) : "";
+      const label = (basic.labels || []).map(l => l.name).filter(Boolean).slice(0, 2).join(", ");
+      return { artists, title, year, label };
+    }
+
+    function renderReleaseList() {
+      const filterTerms = parseFilterTerms($("filter").value);
+      const container = $("releaseList");
+      container.innerHTML = "";
+
+      let shown = 0;
+      for (const item of state.releases) {
+        const basic = item.basic_information || {};
+        const id = basic.id;
+        if (!id) continue;
+        const { artists, title, year, label } = releaseTitleForList(item);
+        const hay = `${artists} ${title} ${year} ${label}`.toLowerCase();
+        if (filterTerms.length && !filterTerms.some(t => hay.includes(t))) continue;
+
+        shown++;
+        const selectedClass = state.selected.has(id) ? "selected" : "";
+        const el = document.createElement("div");
+        el.className = `listItem ${selectedClass}`;
+        el.setAttribute("role", "button");
+        el.setAttribute("tabindex", "0");
+        el.setAttribute("data-release-id", String(id));
+        el.innerHTML = `
+          <div class="listTitle">${escapeHtml(artists || "Artist")} — ${escapeHtml(title)}</div>
+          <div class="listMeta">
+            ${year ? escapeHtml(year) : "—"}
+            ${label ? " • " + escapeHtml(label) : ""}
+            <span class="pill">id ${escapeHtml(String(id))}</span>
+          </div>
+        `;
+        container.appendChild(el);
+      }
+      $("releaseCount").textContent = String(shown);
+      $("selectedCount").textContent = `${state.selected.size} selected`;
+    }
+
+    function parseFilterTerms(raw) {
+      return (raw || "")
+        .split(";")
+        .map(s => s.trim().toLowerCase())
+        .filter(Boolean);
+    }
+
+    function getVisibleReleaseIds() {
+      const filterTerms = parseFilterTerms($("filter").value);
+      const ids = [];
+      for (const item of state.releases) {
+        const basic = item.basic_information || {};
+        const id = basic.id;
+        if (!id) continue;
+        const { artists, title, year, label } = releaseTitleForList(item);
+        const hay = `${artists} ${title} ${year} ${label}`.toLowerCase();
+        if (filterTerms.length && !filterTerms.some(t => hay.includes(t))) continue;
+        ids.push(id);
+      }
+      return ids;
+    }
+
+    async function loadCollection() {
+      state.token = $("token").value.trim();
+      state.corsProxy = $("corsProxy").value.trim();
+      if (!state.token) {
+        setStatus("Token is missing.", "err");
+        return;
+      }
+      if (!state.identity) {
+        setStatus("First click “Verify token + Load collection”.", "err");
+        return;
+      }
+
+      const perPage = Math.max(25, Math.min(100, Number($("perPage").value) || 100));
+      const maxReleases = Math.max(0, Number($("maxReleases").value) || 0);
+      const requestDelay = Math.max(0, Number($("requestDelay").value) || 0);
+
+      try {
+        state.releases = [];
+        state.selected.clear();
+        renderReleaseList();
+        setStatus("Loading collection (folder 0)...\nThis may take a while (rate limit ~60/min).");
+
+        let page = 1;
+        let totalPages = 1;
+        let fetched = 0;
+
+        while (page <= totalPages) {
+          const url = `https://api.discogs.com/users/${encodeURIComponent(state.identity.username)}/collection/folders/0/releases?per_page=${perPage}&page=${page}`;
+          const data = await discogsFetchJson(url, { baseDelayMs: Math.max(800, requestDelay) });
+          const items = data.releases || [];
+          totalPages = data.pagination?.pages || 1;
+
+          for (const it of items) {
+            state.releases.push(it);
+            const id = it.basic_information?.id;
+            if (id) state.selected.add(id); // por defeito: seleciona tudo
+            fetched++;
+            if (maxReleases > 0 && fetched >= maxReleases) break;
+          }
+
+          renderReleaseList();
+          setStatus(`Collection: page ${page}/${totalPages} • ${state.releases.length} loaded • ${state.selected.size} selected`);
+
+          if (maxReleases > 0 && fetched >= maxReleases) break;
+          page++;
+          // Rate limit: ~60/min -> 1100ms entre requests
+          await sleep(Math.max(800, requestDelay));
+        }
+
+        setStatus(`Collection loaded: ${state.releases.length} releases.`, "ok");
+      } catch (e) {
+        setStatus(`Error loading collection: ${e.message}`, "err");
+      }
+    }
+
+    async function startVerifyAndLoad() {
+      state.token = $("token").value.trim();
+      state.corsProxy = $("corsProxy").value.trim();
+      if (!state.token) { setStatus("Token is missing.", "err"); return; }
+      setBusy(true);
+      try {
+        await loadIdentity();
+        if (!state.identity) return;
+        await loadCollection();
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    async function loadReleaseMetadata(releaseId) {
+      // Note: endpoint /releases/{id}. No waveforms/BPM/Key in the browser.
+      const url = `https://api.discogs.com/releases/${releaseId}`;
+      const requestDelay = Math.max(0, Number($("requestDelay").value) || 0);
+      const data = await discogsFetchJson(url, { baseDelayMs: Math.max(800, requestDelay) });
+      return normalizeReleaseMetadata(releaseId, data);
+    }
+
+    function normalizeFromCollectionItem(item) {
+      const basic = item.basic_information || {};
+      const artists = (basic.artists || []).map(a => a.name).filter(Boolean);
+      const labels = (basic.labels || []).map(l => l.name).filter(Boolean);
+      const catalogNumbers = (basic.labels || []).map(l => l.catno).filter(Boolean);
+      const genres = (basic.genres || []).filter(Boolean);
+      const styles = (basic.styles || []).filter(Boolean);
+      const year = basic.year || "";
+      const title = basic.title || "";
+      const coverUrl = basic.cover_image || "";
+      // Collection endpoint does not provide full tracklist; generate without table (fast mode).
+      return {
+        id: basic.id,
+        title,
+        artist: artists,
+        label: labels,
+        catalog_numbers: catalogNumbers,
+        genres,
+        styles,
+        year,
+        tracklist: [],
+        cover_url: coverUrl,
+      };
+    }
+
+    function normalizeReleaseMetadata(releaseId, data) {
+      const artists = (data.artists || []).map(a => a.name).filter(Boolean);
+      const labels = (data.labels || []).map(l => l.name).filter(Boolean);
+      const catalogNumbers = (data.labels || []).map(l => l.catno).filter(Boolean);
+      const genres = (data.genres || []).filter(Boolean);
+      const styles = (data.styles || []).filter(Boolean);
+      const year = data.year || "";
+      const title = data.title || "";
+      const images = data.images || [];
+      const coverUrl = images[0]?.uri || images[0]?.resource_url || "";
+      const tracklist = (data.tracklist || [])
+        .filter(t => t && t.type_ === "track")
+        .map(t => ({
+          position: t.position || "",
+          title: t.title || "",
+          duration: t.duration || "",
+          artist: (t.artists && t.artists[0]?.name) ? t.artists[0].name : ""
+        }));
+
+      return {
+        id: releaseId,
+        title,
+        artist: artists,
+        label: labels,
+        catalog_numbers: catalogNumbers,
+        genres,
+        styles,
+        year,
+        tracklist,
+        cover_url: coverUrl,
+      };
+    }
+
+    async function generateQRCodeDataUrl(releaseId) {
+      const url = `https://discogs.com/release/${releaseId}`;
+      // QRCode library: window.QRCode (CDN). Fallback: retorna string vazia.
+      if (!window.QRCode || typeof window.QRCode.toDataURL !== "function") return "";
+      return await QRCode.toDataURL(url, { errorCorrectionLevel: "M", margin: 1, width: 180 });
+    }
+
+    function buildFooter(meta) {
+      const parts = [];
+      const label = (meta.label || []).slice(0, 2).join(", ");
+      const cat = (meta.catalog_numbers || []).filter(Boolean).slice(0, 2).join(", ");
+      const year = meta.year ? String(meta.year) : "";
+      const genres = (meta.genres || []).slice(0, 3).join(", ");
+      const styles = (meta.styles || []).slice(0, 3).join(", ");
+
+      if (label) parts.push(`<strong>${escapeHtml(label)}</strong>`);
+      if (cat) parts.push(escapeHtml(cat));
+      if (year) parts.push(escapeHtml(year));
+      if (genres) parts.push(escapeHtml(genres));
+      if (styles) parts.push(`<em>${escapeHtml(styles)}</em>`);
+      parts.push(`Release ID: ${escapeHtml(String(meta.id))}`);
+      return parts.join(", ");
+    }
+
+    function buildTrackTable(meta) {
+      const tracks = meta.tracklist || [];
+      if (!tracks.length) return "";
+      const rows = tracks.map(t => {
+        const pos = t.position || "";
+        const title = t.title || "";
+        const dur = t.duration || "";
+        return `
+          <tr>
+            <td class="track-position">${escapeHtml(pos)}</td>
+            <td class="track-title" title="${escapeHtml(title)}">${escapeHtml(title)}</td>
+            <td class="track-duration">${escapeHtml(dur)}</td>
+          </tr>
+        `;
+      }).join("");
+      return `<table class="label-table">${rows}</table>`;
+    }
+
+    function buildLabelPage(meta, qrDataUrl) {
+      const artist = (meta.artist || []).join(", ") || "Artista";
+      const title = meta.title || "Título";
+      const cover = meta.cover_url;
+
+      const coverHtml = cover
+        ? `<img src="${escapeHtml(cover)}" alt="Capa" loading="lazy" referrerpolicy="no-referrer" />`
+        : `<div class="coverPlaceholder" aria-label="Sem capa"></div>`;
+
+      const tableHtml = buildTrackTable(meta);
+      const footerHtml = buildFooter(meta);
+
+      const qrHtml = qrDataUrl
+        ? `<img class="qr-code" src="${escapeHtml(qrDataUrl)}" alt="QR" />`
+        : "";
+
+      return `
+        <div class="labelCard">
+          <div class="label">
+            <div class="label-cover">${coverHtml}</div>
+            <div class="label-content">
+              ${qrHtml}
+              <div class="label-header">${escapeHtml(artist)}</div>
+              <div class="label-title">${escapeHtml(title)}</div>
+              ${tableHtml}
+              <div class="label-footer">${footerHtml}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    async function generateLabels() {
+      state.token = $("token").value.trim();
+      state.corsProxy = $("corsProxy").value.trim();
+      if (!state.token) { setStatus("Token is missing.", "err"); return; }
+      if (!state.identity) { setStatus("First click “Verify token + Load collection”.", "err"); return; }
+      if (!state.releases.length) { setStatus("First load your collection.", "err"); return; }
+
+      const selected = Array.from(state.selected);
+      if (!selected.length) { setStatus("No releases selected.", "err"); return; }
+
+      setBusy(true);
+      try {
+        const requestDelay = Math.max(0, Number($("requestDelay").value) || 0);
+        const includeTracklist = $("includeTracklist").checked;
+        const stopOnError = $("stopOnError").checked;
+
+        setStatus(`Generating labels for ${selected.length} release(s)...\nDelay: ${Math.max(800, requestDelay)}ms • Tracklist: ${includeTracklist ? "yes" : "no"}`);
+        const pages = [];
+        const errors = [];
+
+        let i = 0;
+        for (const releaseId of selected) {
+          i++;
+          setStatus(`Generating ${i}/${selected.length} (release ${releaseId})...${errors.length ? `\nErrors so far: ${errors.length}` : ""}`);
+
+          try {
+            const item = state.releases.find(r => r.basic_information?.id === releaseId);
+            const meta = includeTracklist ? await loadReleaseMetadata(releaseId) : normalizeFromCollectionItem(item || { basic_information: { id: releaseId } });
+            await sleep(Math.max(800, requestDelay)); // rate limit (Discogs / proxy)
+
+            const qr = await generateQRCodeDataUrl(releaseId);
+            pages.push(buildLabelPage(meta, qr));
+          } catch (e) {
+            errors.push({ releaseId, message: e?.message || String(e) });
+            if (stopOnError) throw e;
+          }
+        }
+
+        state.generatedHtml = pages.join("\n");
+        $("output").innerHTML = state.generatedHtml;
+        $("outputCount").textContent = `${pages.length} labels`;
+        if (errors.length) {
+          setStatus(`Generated labels: ${pages.length}. Skipped errors: ${errors.length}.\nFirst error: release ${errors[0].releaseId} — ${errors[0].message}`, "ok");
+        } else {
+          setStatus(`Generated labels: ${pages.length}.`, "ok");
+        }
+      } catch (e) {
+        setStatus(`Error generating labels: ${e.message}`, "err");
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function exportHtml() {
+      if (!state.generatedHtml) {
+        setStatus("Nothing to export. Generate labels first.", "err");
+        return;
+      }
+
+      // Export a labels-only HTML (keeps required CSS + QR as data URLs + cover art by URL).
+      const css = document.querySelector("style").textContent || "";
+      const htmlDoc = `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Discogs Labels (Export)</title>
+  <style>${css}</style>
+</head>
+<body>
+  <div class="labelsRoot">
+    <div class="labelsBody"><div class="labelsStack">${state.generatedHtml}</div></div>
+  </div>
+</body>
+</html>`;
+
+      const blob = new Blob([htmlDoc], { type: "text/html;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const ts = new Date().toISOString().slice(0,19).replaceAll(":", "").replace("T", "_");
+      a.href = url;
+      a.download = `simple_discogs_label_generator_${ts}.html`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatus("Export complete (HTML file downloaded).", "ok");
+    }
+
+    // Wire UI
+    $("btnStart").addEventListener("click", startVerifyAndLoad);
+    $("btnGenerate").addEventListener("click", generateLabels);
+    $("btnExport").addEventListener("click", exportHtml);
+
+    $("filter").addEventListener("input", renderReleaseList);
+    $("releaseList").addEventListener("click", (e) => {
+      const target = e.target;
+      const itemEl = target instanceof Element ? target.closest(".listItem") : null;
+      if (!itemEl) return;
+      const id = Number(itemEl.getAttribute("data-release-id"));
+      if (!id) return;
+      if (state.selected.has(id)) state.selected.delete(id);
+      else state.selected.add(id);
+      renderReleaseList();
+    });
+
+    $("btnAll").addEventListener("click", () => {
+      for (const id of getVisibleReleaseIds()) state.selected.add(id);
+      renderReleaseList();
+    });
+    $("btnNone").addEventListener("click", () => {
+      state.selected.clear();
+      renderReleaseList();
+    });
+
+    // Inicial
+    setBusy(false);
+    setStatus("Ready. Verify token + Load collection → Generate labels.");
+  </script>
+</body>
+</html>
+
