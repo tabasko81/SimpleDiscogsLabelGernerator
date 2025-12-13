@@ -1,8 +1,7 @@
 # Simple Discogs Label Generator
 
 `discogs_labels_standalone.html` is a single-file, standalone web app that runs locally in your browser. You paste your Discogs personal access token, load your collection, and generate clean, printable HTML labels for releases.
-
-This project was distilled from earlier testing of a more advanced/feature-rich repository. The goal here is to keep the workflow lightweight and practical for collectors, sellers/resellers, and enthusiasts.
+The goal here is to keep the workflow lightweight and practical for collectors, sellers/resellers, and enthusiasts.
 
 ## What it does
 
@@ -16,12 +15,6 @@ This project was distilled from earlier testing of a more advanced/feature-rich 
   - Cover art (from Discogs image URLs)
   - A QR code that points to the Discogs release page
 - Works without installing Python, TeX, or running a server
-
-## What it does NOT do (by design)
-
-- No audio analysis (no BPM/key detection)
-- No waveform generation
-- No YouTube downloads
 
 ## Requirements
 
@@ -74,8 +67,6 @@ Important: a CORS proxy can see your traffic, including your token. Only use a p
 - Your token is kept in memory in the page. It is not intentionally stored to disk by the app.
 - If you use a CORS proxy, your requests (and token) may be visible to that proxy.
 - The exported HTML file contains:
-  - QR codes embedded as data URLs
-  - Cover art referenced by remote Discogs image URLs (printing may require internet access)
 
 ## Discogs terms
 
