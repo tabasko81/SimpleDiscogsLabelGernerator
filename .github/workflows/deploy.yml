@@ -18,6 +18,8 @@ jobs:
         uses: actions/configure-pages@v3
       - name: Copy HTML to index.html
         run: cp SimpleDiscogsLabelGernerator.html index.html
+      - name: Create .nojekyll file
+        run: touch .nojekyll
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v1
         with:
