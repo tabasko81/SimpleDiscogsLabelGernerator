@@ -1,6 +1,6 @@
 # Simple Discogs Label Generator
 
-`discogs_labels_standalone.html` is a single-file, standalone web app that runs locally in your browser. You paste your Discogs personal access token, load your collection, and generate clean, printable HTML labels for releases.
+`SimpleDiscogsLabelGernerator.html` is a single-file, standalone web app that runs locally in your browser. You paste your Discogs personal access token, load your collection, and generate clean, printable HTML labels for releases.
 The goal here is to keep the workflow lightweight and practical for collectors, sellers/resellers, and enthusiasts.
 
 > **Inspired by:** This project was inspired by [DiscogsRecordLabelGenerator](https://github.com/LahmacunLove/DiscogsRecordLabelGenerator) by LahmacunLove. While that project uses Python, audio analysis, and LaTeX to generate labels with waveforms and BPM/key detection, this version focuses on a lightweight, browser-based approach that works entirely client-side.
@@ -34,7 +34,7 @@ No other dependencies are required.
 
 ## Quick start
 
-1. Open `discogs_labels_standalone.html` in your browser (double click it).
+1. Open `SimpleDiscogsLabelGernerator.html` in your browser (double click it), or use the [live version](https://tabasko81.github.io/SimpleDiscogsLabelGernerator/).
 2. Paste your Discogs token.
 3. Click **Verify token + Load collection**.
 4. Filter and select releases.
@@ -123,6 +123,6 @@ See `LICENSE` and `NOTICE` for details.
 
 ## File layout
 
-- `discogs_labels_standalone.html`: the entire application
+- `SimpleDiscogsLabelGernerator.html`: the entire application
 
 
