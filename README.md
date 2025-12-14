@@ -13,7 +13,6 @@ The goal here is to keep the workflow lightweight and practical for collectors, 
   - Label + catalog number (when available)
   - Genres and styles (sub-genres) in the footer (when available)
   - Cover art (from Discogs image URLs)
-  - A QR code that points to the Discogs release page
 - Works without installing Python, TeX, or running a server
 
 ## Requirements
