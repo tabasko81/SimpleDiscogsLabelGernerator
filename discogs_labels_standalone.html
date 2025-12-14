@@ -182,12 +182,53 @@
       padding: 14px;
       border-bottom: 1px solid var(--border);
       display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .labelsHeader .top {
+      display: flex;
       gap: 10px;
       align-items: center;
       justify-content: space-between;
     }
     .labelsHeader .left { display: flex; gap: 10px; align-items: baseline; }
     .labelsHeader .count { font-size: 12px; color: var(--muted); }
+    .labelsHeader .controls {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--border);
+    }
+    .labelsHeader .control-group {
+      display: flex;
+      gap: 6px;
+      align-items: center;
+    }
+    .labelsHeader .control-group label {
+      font-size: 11px;
+      color: var(--muted);
+      margin: 0;
+      white-space: nowrap;
+    }
+    .labelsHeader .control-group input[type="color"] {
+      width: 30px;
+      height: 28px;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      cursor: pointer;
+      padding: 2px;
+    }
+    .labelsHeader .control-group input[type="number"] {
+      width: 50px;
+      padding: 6px;
+      font-size: 12px;
+    }
+    .labelsHeader .control-group button {
+      padding: 6px 10px;
+      font-size: 11px;
+    }
     .labelsBody { padding: 0; }
 
     /* Output: lista vertical contínua */
@@ -247,15 +288,44 @@
       margin: 10px 0;
       width: 100%;
       border-collapse: collapse;
+      cursor: pointer;
+    }
+    .label-table:hover {
+      opacity: 0.95;
+    }
+    .label-table th {
+      font-size: inherit;
+      padding: 5px 8px;
+      text-align: left;
+      font-weight: 600;
+      color: #888;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .label-table th.hidden {
+      display: none;
+    }
+    .label-table td.hidden {
+      display: none;
     }
     .label-table td {
       padding: 5px 8px;
       vertical-align: middle;
     }
-    .label-table tr {
+    .label-table tbody tr {
       border-bottom: 1px solid #f0f0f0;
     }
-    .label-table tr:last-child { border-bottom: none; }
+    .label-table tbody tr:last-child { 
+      border-bottom: none; 
+    }
+    .label-table tbody tr td {
+      border-bottom: 1px solid #f0f0f0;
+    }
+    .label-table tbody tr:last-child td {
+      border-bottom: none;
+    }
+    .label-table thead tr {
+      border-bottom: 1px solid #e5e7eb;
+    }
     .track-position {
       font-weight: 500;
       color: #888;
@@ -277,6 +347,82 @@
       white-space: nowrap;
       text-align: right;
       width: 52px;
+    }
+    .track-bpm, .track-key {
+      color: #888;
+      font-size: 10px;
+      white-space: nowrap;
+      text-align: center;
+      width: 50px;
+      padding: 5px 4px;
+      border: 1px solid transparent;
+      border-radius: 3px;
+      transition: background-color 0.15s ease;
+    }
+    .track-bpm:hover, .track-key:hover {
+      background-color: #f9fafb;
+    }
+    .track-bpm:focus, .track-key:focus {
+      outline: none;
+      border-color: #cbd5e1;
+      background-color: white;
+    }
+    .track-bpm.hidden, .track-key.hidden {
+      display: none;
+    }
+    .label-table th.track-bpm.hidden,
+    .label-table th.track-key.hidden {
+      display: none;
+    }
+    .label-notes {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid #f0f0f0;
+      font-size: 11px;
+      color: #666;
+      display: none;
+      width: 100%;
+    }
+    .label-notes.visible {
+      display: block;
+    }
+    .label-notes-content {
+      width: 100%;
+      min-height: 40px;
+      border: none;
+      background: transparent;
+      font-size: 11px;
+      font-family: inherit;
+      color: #666;
+      resize: vertical;
+      outline: none;
+      padding: 4px 0;
+      white-space: pre-wrap;
+      word-wrap: break-word;
+    }
+    .label-notes-content:focus {
+      color: #1a1a1a;
+    }
+    .label-notes-content[data-placeholder]:empty:before,
+    .label-notes-content[data-placeholder]:not(:focus):empty:before {
+      content: attr(data-placeholder);
+      color: #999;
+      font-style: italic;
+    }
+    .label-notes-content[data-placeholder]:focus:empty:before {
+      content: "";
+    }
+    @media print {
+      .label-notes-content[data-placeholder]:empty:before {
+        content: "" !important;
+      }
+    }
+    .label-cover {
+      cursor: pointer;
+      position: relative;
+    }
+    .label-cover:hover {
+      opacity: 0.9;
     }
     .label-footer {
       font-size: 9px;
@@ -317,6 +463,17 @@
       .labelsRoot { border: none; box-shadow: none; }
       .labelsHeader { display: none; }
       .labelsStack { padding: 0; gap: 10px; }
+      .label-notes:not(.visible) { display: none !important; }
+      .label-notes-content { 
+        color: #666 !important; 
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .label-notes-content:empty,
+      .label-notes-content:empty:before {
+        display: none !important;
+        content: "" !important;
+      }
       .labelCard {
         box-shadow: none;
         border: 1px solid #e5e7eb;
@@ -444,11 +601,43 @@
 
     <section class="labelsRoot" aria-label="Generated labels">
       <div class="labelsHeader">
-        <div class="left">
-          <div class="title">Preview</div>
-          <div class="count" id="outputCount">0 labels</div>
+        <div class="top">
+          <div class="left">
+            <div class="title">Preview</div>
+            <div class="count" id="outputCount">0 labels</div>
+          </div>
+          <div class="count">Tip: use Ctrl+P to print.</div>
         </div>
-        <div class="count">Tip: use Ctrl+P to print.</div>
+        <div class="controls">
+          <div class="control-group">
+            <label>Font:</label>
+            <button id="btnFontSizeDown" title="Decrease font size">-1pt</button>
+            <input type="number" id="fontSizeDisplay" value="0" readonly style="width:40px;text-align:center;" />
+            <button id="btnFontSizeUp" title="Increase font size">+1pt</button>
+          </div>
+          <div class="control-group">
+            <label>Color pick:</label>
+          </div>
+          <div class="control-group">
+            <label>Artist(s):</label>
+            <input type="color" id="titleColor" value="#1a1a1a" />
+          </div>
+          <div class="control-group">
+            <label>Release:</label>
+            <input type="color" id="subtitleColor" value="#666666" />
+          </div>
+          <div class="control-group">
+            <label>Spacing:</label>
+            <button id="btnSpacingDown" title="Decrease spacing">-1 line</button>
+            <input type="number" id="spacingDisplay" value="0" readonly style="width:40px;text-align:center;" />
+            <button id="btnSpacingUp" title="Increase spacing">+1 line</button>
+          </div>
+        </div>
+        <div style="padding: 10px 14px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); line-height: 1.5;">
+          <strong style="color: var(--text);">Instructions:</strong><br>
+          • Click on the cover image to show/hide notes field for that label<br>
+          • Click on the track table to show/hide BPM/KEY columns for that label
+        </div>
       </div>
       <div class="labelsBody">
         <div class="labelsStack" id="output"></div>
@@ -467,6 +656,17 @@
       generatedHtml: "",   // HTML labels (inner)
       lastError: null,
       isBusy: false,
+      // Configurações de estilo
+      fontSizeOffset: 0, // offset em pt
+      titleColor: "#1a1a1a",
+      subtitleColor: "#666666",
+      spacingOffset: 0, // offset em linhas
+      // Dados por label
+      labelNotes: new Map(), // releaseId -> notes
+      trackBpm: new Map(), // releaseId -> {trackIndex -> bpm}
+      trackKey: new Map(), // releaseId -> {trackIndex -> key}
+      labelShowBpmKey: new Map(), // releaseId -> boolean (individual toggle)
+      releaseData: new Map(), // releaseId -> {meta, qr} (para export)
     };
 
     // UI helpers
@@ -583,7 +783,7 @@
     function releaseTitleForList(item) {
       const basic = item.basic_information || {};
       const artists = (basic.artists || []).map(a => a.name).filter(Boolean).join(", ");
-      const title = basic.title || "Sem título";
+      const title = basic.title || "No title";
       const year = basic.year ? String(basic.year) : "";
       const label = (basic.labels || []).map(l => l.name).filter(Boolean).slice(0, 2).join(", ");
       return { artists, title, year, label };
@@ -681,7 +881,7 @@
           for (const it of items) {
             state.releases.push(it);
             const id = it.basic_information?.id;
-            if (id) state.selected.add(id); // por defeito: seleciona tudo
+            if (id) state.selected.add(id); // default: select all
             fetched++;
             if (maxReleases > 0 && fetched >= maxReleases) break;
           }
@@ -805,50 +1005,75 @@
       return parts.join(", ");
     }
 
-    function buildTrackTable(meta) {
+    function buildTrackTable(meta, releaseId) {
       const tracks = meta.tracklist || [];
       if (!tracks.length) return "";
-      const rows = tracks.map(t => {
+      const bpmMap = state.trackBpm.get(releaseId) || {};
+      const keyMap = state.trackKey.get(releaseId) || {};
+      const showBpmKey = state.labelShowBpmKey.get(releaseId) || false;
+      const rows = tracks.map((t, idx) => {
         const pos = t.position || "";
         const title = t.title || "";
         const dur = t.duration || "";
+        const bpm = bpmMap[idx] || "";
+        const key = keyMap[idx] || "";
+        const bpmClass = showBpmKey ? "" : "hidden";
+        const keyClass = showBpmKey ? "" : "hidden";
         return `
           <tr>
             <td class="track-position">${escapeHtml(pos)}</td>
             <td class="track-title" title="${escapeHtml(title)}">${escapeHtml(title)}</td>
+            <td class="track-bpm ${bpmClass}" contenteditable="true" data-release-id="${releaseId}" data-track-index="${idx}" data-field="bpm">${escapeHtml(bpm)}</td>
+            <td class="track-key ${keyClass}" contenteditable="true" data-release-id="${releaseId}" data-track-index="${idx}" data-field="key">${escapeHtml(key)}</td>
             <td class="track-duration">${escapeHtml(dur)}</td>
           </tr>
         `;
       }).join("");
-      return `<table class="label-table">${rows}</table>`;
+      const bpmHeader = showBpmKey ? '<th class="track-bpm">BPM</th>' : '<th class="track-bpm hidden">BPM</th>';
+      const keyHeader = showBpmKey ? '<th class="track-key">KEY</th>' : '<th class="track-key hidden">KEY</th>';
+      return `<table class="label-table" data-release-id="${releaseId}"><thead><tr><th></th><th></th>${bpmHeader}${keyHeader}<th></th></tr></thead><tbody>${rows}</tbody></table>`;
     }
 
     function buildLabelPage(meta, qrDataUrl) {
-      const artist = (meta.artist || []).join(", ") || "Artista";
-      const title = meta.title || "Título";
+      const artist = (meta.artist || []).join(", ") || "Artist";
+      const title = meta.title || "Title";
       const cover = meta.cover_url;
+      const releaseId = meta.id;
 
       const coverHtml = cover
-        ? `<img src="${escapeHtml(cover)}" alt="Capa" loading="lazy" referrerpolicy="no-referrer" />`
-        : `<div class="coverPlaceholder" aria-label="Sem capa"></div>`;
+        ? `<img src="${escapeHtml(cover)}" alt="Cover" loading="lazy" referrerpolicy="no-referrer" />`
+        : `<div class="coverPlaceholder" aria-label="No cover"></div>`;
 
-      const tableHtml = buildTrackTable(meta);
+      const tableHtml = buildTrackTable(meta, releaseId);
       const footerHtml = buildFooter(meta);
+      const notes = state.labelNotes.get(releaseId) || "";
+      const notesHtml = `
+        <div class="label-notes" data-release-id="${releaseId}">
+          <div class="label-notes-content" contenteditable="true" data-placeholder="Add notes about this release..." data-release-id="${releaseId}">${escapeHtml(notes)}</div>
+        </div>
+      `;
 
       const qrHtml = qrDataUrl
         ? `<img class="qr-code" src="${escapeHtml(qrDataUrl)}" alt="QR" />`
         : "";
 
+      // Aplicar estilos dinâmicos
+      const fontSizeHeader = 16 + state.fontSizeOffset;
+      const fontSizeTitle = 13 + state.fontSizeOffset;
+      const fontSizeTable = 11 + state.fontSizeOffset;
+      const styleAttr = `style="--header-size: ${fontSizeHeader}px; --title-size: ${fontSizeTitle}px; --table-size: ${fontSizeTable}px; --title-color: ${state.titleColor}; --subtitle-color: ${state.subtitleColor};"`;
+
       return `
-        <div class="labelCard">
+        <div class="labelCard" ${styleAttr} data-release-id="${releaseId}">
           <div class="label">
-            <div class="label-cover">${coverHtml}</div>
+            <div class="label-cover" data-release-id="${releaseId}">${coverHtml}</div>
             <div class="label-content">
               ${qrHtml}
-              <div class="label-header">${escapeHtml(artist)}</div>
-              <div class="label-title">${escapeHtml(title)}</div>
+              <div class="label-header" style="font-size: ${fontSizeHeader}px; color: ${state.titleColor};">${escapeHtml(artist)}</div>
+              <div class="label-title" style="font-size: ${fontSizeTitle}px; color: ${state.subtitleColor};">${escapeHtml(title)}</div>
               ${tableHtml}
               <div class="label-footer">${footerHtml}</div>
+              ${notesHtml}
             </div>
           </div>
         </div>
@@ -876,6 +1101,7 @@
         const errors = [];
 
         let i = 0;
+        const releaseData = new Map(); // releaseId -> {meta, qr}
         for (const releaseId of selected) {
           i++;
           setStatus(`Generating ${i}/${selected.length} (release ${releaseId})...${errors.length ? `\nErrors so far: ${errors.length}` : ""}`);
@@ -886,16 +1112,20 @@
             await sleep(Math.max(800, requestDelay)); // rate limit (Discogs / proxy)
 
             const qr = await generateQRCodeDataUrl(releaseId);
+            releaseData.set(releaseId, { meta, qr });
             pages.push(buildLabelPage(meta, qr));
           } catch (e) {
             errors.push({ releaseId, message: e?.message || String(e) });
             if (stopOnError) throw e;
           }
         }
+        state.releaseData = releaseData; // Guardar para export
 
         state.generatedHtml = pages.join("\n");
         $("output").innerHTML = state.generatedHtml;
         $("outputCount").textContent = `${pages.length} labels`;
+        applyPreviewSettings();
+        attachLabelEventListeners();
         if (errors.length) {
           setStatus(`Generated labels: ${pages.length}. Skipped errors: ${errors.length}.\nFirst error: release ${errors[0].releaseId} — ${errors[0].message}`, "ok");
         } else {
@@ -908,13 +1138,271 @@
       }
     }
 
+    function applyPreviewSettings() {
+      const fontSizeHeader = 16 + state.fontSizeOffset;
+      const fontSizeTitle = 13 + state.fontSizeOffset;
+      const fontSizeTable = 11 + state.fontSizeOffset;
+      const spacing = 12 + (state.spacingOffset * 12); // 12px base + offset em múltiplos de 12px
+
+      // Aplicar tamanhos de fonte
+      document.querySelectorAll(".label-header").forEach(el => {
+        el.style.fontSize = `${fontSizeHeader}px`;
+        el.style.color = state.titleColor;
+      });
+      document.querySelectorAll(".label-title").forEach(el => {
+        el.style.fontSize = `${fontSizeTitle}px`;
+        el.style.color = state.subtitleColor;
+      });
+      document.querySelectorAll(".label-table").forEach(el => {
+        el.style.fontSize = `${fontSizeTable}px`;
+      });
+
+      // Aplicar espaçamento
+      const stack = $("output");
+      if (stack) {
+        stack.style.gap = `${spacing}px`;
+      }
+
+      // Aplicar visibilidade BPM/KEY individual por label
+      document.querySelectorAll(".label-table").forEach(table => {
+        const releaseId = Number(table.getAttribute("data-release-id"));
+        if (!releaseId) return;
+        
+        const showBpmKey = state.labelShowBpmKey.get(releaseId) || false;
+        table.querySelectorAll(".track-bpm, .track-key").forEach(el => {
+          if (showBpmKey) {
+            el.classList.remove("hidden");
+          } else {
+            el.classList.add("hidden");
+          }
+        });
+        table.querySelectorAll("th.track-bpm, th.track-key").forEach(el => {
+          if (showBpmKey) {
+            el.classList.remove("hidden");
+          } else {
+            el.classList.add("hidden");
+          }
+        });
+      });
+    }
+
+    function attachLabelEventListeners() {
+      // Clique na imagem para mostrar/ocultar notas
+      document.querySelectorAll(".label-cover").forEach(cover => {
+        cover.removeEventListener("click", handleCoverClick);
+        cover.addEventListener("click", handleCoverClick);
+      });
+
+      // Edição de BPM/KEY
+      document.querySelectorAll(".track-bpm, .track-key").forEach(cell => {
+        cell.removeEventListener("blur", handleBpmKeyEdit);
+        cell.addEventListener("blur", handleBpmKeyEdit);
+        // Prevenir toggle ao editar
+        cell.addEventListener("click", (e) => {
+          e.stopPropagation();
+        });
+      });
+
+      // Toggle BPM/KEY ao clicar na tabela
+      document.querySelectorAll(".label-table").forEach(table => {
+        table.removeEventListener("click", handleTableClick);
+        table.addEventListener("click", handleTableClick);
+      });
+
+      // Edição de notas
+      document.querySelectorAll(".label-notes-content").forEach(content => {
+        content.removeEventListener("blur", handleNotesEdit);
+        content.addEventListener("blur", handleNotesEdit);
+        content.removeEventListener("input", handleNotesEdit);
+        content.addEventListener("input", handleNotesEdit);
+      });
+    }
+
+    function handleCoverClick(e) {
+      const cover = e.currentTarget;
+      const releaseId = Number(cover.getAttribute("data-release-id"));
+      if (!releaseId) return;
+
+      const labelCard = cover.closest(".labelCard");
+      if (!labelCard) return;
+
+      const notesDiv = labelCard.querySelector(".label-notes");
+      if (notesDiv) {
+        notesDiv.classList.toggle("visible");
+        if (notesDiv.classList.contains("visible")) {
+          const content = notesDiv.querySelector(".label-notes-content");
+          if (content) {
+            content.focus();
+            // Move cursor to end
+            const range = document.createRange();
+            range.selectNodeContents(content);
+            range.collapse(false);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+          }
+        }
+      }
+    }
+
+    function handleTableClick(e) {
+      // Não fazer toggle se clicou numa célula editável (BPM/KEY)
+      if (e.target.classList.contains("track-bpm") || e.target.classList.contains("track-key")) {
+        return;
+      }
+      
+      const table = e.currentTarget;
+      const releaseId = Number(table.getAttribute("data-release-id"));
+      if (!releaseId) return;
+
+      const currentState = state.labelShowBpmKey.get(releaseId) || false;
+      state.labelShowBpmKey.set(releaseId, !currentState);
+      
+      // Atualizar visibilidade
+      const showBpmKey = !currentState;
+      const labelCard = table.closest(".labelCard");
+      if (labelCard) {
+        labelCard.querySelectorAll(".track-bpm, .track-key").forEach(cell => {
+          if (showBpmKey) {
+            cell.classList.remove("hidden");
+          } else {
+            cell.classList.add("hidden");
+          }
+        });
+        labelCard.querySelectorAll("th.track-bpm, th.track-key").forEach(header => {
+          if (showBpmKey) {
+            header.classList.remove("hidden");
+          } else {
+            header.classList.add("hidden");
+          }
+        });
+      }
+    }
+
+    function handleBpmKeyEdit(e) {
+      const cell = e.target;
+      const releaseId = Number(cell.getAttribute("data-release-id"));
+      const trackIndex = Number(cell.getAttribute("data-track-index"));
+      const field = cell.getAttribute("data-field");
+      const value = cell.textContent.trim();
+
+      if (!releaseId || isNaN(trackIndex) || !field) return;
+
+      if (field === "bpm") {
+        if (!state.trackBpm.has(releaseId)) {
+          state.trackBpm.set(releaseId, {});
+        }
+        state.trackBpm.get(releaseId)[trackIndex] = value;
+      } else if (field === "key") {
+        if (!state.trackKey.has(releaseId)) {
+          state.trackKey.set(releaseId, {});
+        }
+        state.trackKey.get(releaseId)[trackIndex] = value;
+      }
+    }
+
+    function handleNotesEdit(e) {
+      const content = e.target;
+      const releaseId = Number(content.getAttribute("data-release-id"));
+      if (!releaseId) return;
+      
+      // Get text content, handling both textContent and innerText
+      const value = (content.textContent || content.innerText || "").trim();
+      state.labelNotes.set(releaseId, value);
+      
+      // Update the element to show placeholder if empty
+      if (!value && content.hasAttribute("data-placeholder")) {
+        // Force re-render to show placeholder
+        const placeholder = content.getAttribute("data-placeholder");
+        if (!content.textContent.trim()) {
+          content.textContent = "";
+        }
+      }
+    }
+
     function exportHtml() {
-      if (!state.generatedHtml) {
+      if (!state.generatedHtml || !state.releaseData) {
         setStatus("Nothing to export. Generate labels first.", "err");
         return;
       }
 
-      // Export a labels-only HTML (keeps required CSS + QR as data URLs + cover art by URL).
+      // Reconstruir HTML com todas as configurações aplicadas
+      const selected = Array.from(state.selected);
+      const pages = [];
+      
+      // Reconstruir cada label com as configurações atuais
+      for (const releaseId of selected) {
+        const data = state.releaseData.get(releaseId);
+        if (!data) continue;
+
+        const meta = data.meta;
+        const qr = data.qr;
+        
+        // Reconstruir com configurações atuais
+        const artist = (meta.artist || []).join(", ") || "Artist";
+        const title = meta.title || "Title";
+        const cover = meta.cover_url;
+        const notes = state.labelNotes.get(releaseId) || "";
+        const bpmMap = state.trackBpm.get(releaseId) || {};
+        const keyMap = state.trackKey.get(releaseId) || {};
+        const showBpmKey = state.labelShowBpmKey.get(releaseId) || false;
+
+        const fontSizeHeader = 16 + state.fontSizeOffset;
+        const fontSizeTitle = 13 + state.fontSizeOffset;
+        const fontSizeTable = 11 + state.fontSizeOffset;
+
+        const coverHtml = cover
+          ? `<img src="${escapeHtml(cover)}" alt="Cover" loading="lazy" referrerpolicy="no-referrer" />`
+          : `<div class="coverPlaceholder" aria-label="No cover"></div>`;
+
+        // Reconstruir tabela
+        const tracks = meta.tracklist || [];
+        const rows = tracks.map((t, idx) => {
+          const pos = t.position || "";
+          const trackTitle = t.title || "";
+          const dur = t.duration || "";
+          const bpm = bpmMap[idx] || "";
+          const key = keyMap[idx] || "";
+          const bpmClass = showBpmKey ? "" : "hidden";
+          const keyClass = showBpmKey ? "" : "hidden";
+          return `
+            <tr>
+              <td class="track-position">${escapeHtml(pos)}</td>
+              <td class="track-title">${escapeHtml(trackTitle)}</td>
+              <td class="track-bpm ${bpmClass}">${escapeHtml(bpm)}</td>
+              <td class="track-key ${keyClass}">${escapeHtml(key)}</td>
+              <td class="track-duration">${escapeHtml(dur)}</td>
+            </tr>
+          `;
+        }).join("");
+        const bpmHeader = showBpmKey ? '<th class="track-bpm">BPM</th>' : '<th class="track-bpm hidden">BPM</th>';
+        const keyHeader = showBpmKey ? '<th class="track-key">KEY</th>' : '<th class="track-key hidden">KEY</th>';
+        const tableHtml = tracks.length ? `<table class="label-table"><thead><tr><th></th><th></th>${bpmHeader}${keyHeader}<th></th></tr></thead><tbody>${rows}</tbody></table>` : "";
+
+        const footerHtml = buildFooter(meta);
+        const qrHtml = qr ? `<img class="qr-code" src="${escapeHtml(qr)}" alt="QR" />` : "";
+        const notesHtml = notes ? `<div class="label-notes visible"><div class="label-notes-content" style="font-size:11px;color:#666;white-space:pre-wrap;">${escapeHtml(notes)}</div></div>` : "";
+
+        const spacing = 12 + (state.spacingOffset * 12);
+
+        pages.push(`
+          <div class="labelCard" style="margin-bottom: ${spacing}px;">
+            <div class="label">
+              <div class="label-cover">${coverHtml}</div>
+              <div class="label-content">
+                ${qrHtml}
+                <div class="label-header" style="font-size: ${fontSizeHeader}px; color: ${state.titleColor};">${escapeHtml(artist)}</div>
+                <div class="label-title" style="font-size: ${fontSizeTitle}px; color: ${state.subtitleColor};">${escapeHtml(title)}</div>
+                ${tableHtml}
+                <div class="label-footer">${footerHtml}</div>
+                ${notesHtml}
+              </div>
+            </div>
+          </div>
+        `);
+      }
+
+      const spacing = 12 + (state.spacingOffset * 12);
       const css = document.querySelector("style").textContent || "";
       const htmlDoc = `<!DOCTYPE html>
 <html lang="en">
@@ -926,7 +1414,7 @@
 </head>
 <body>
   <div class="labelsRoot">
-    <div class="labelsBody"><div class="labelsStack">${state.generatedHtml}</div></div>
+    <div class="labelsBody"><div class="labelsStack" style="gap: ${spacing}px;">${pages.join("\n")}</div></div>
   </div>
 </body>
 </html>`;
@@ -969,6 +1457,48 @@
       state.selected.clear();
       renderReleaseList();
     });
+
+    // Controles do preview
+    $("btnFontSizeDown").addEventListener("click", () => {
+      state.fontSizeOffset = Math.max(-10, state.fontSizeOffset - 1);
+      $("fontSizeDisplay").value = state.fontSizeOffset;
+      applyPreviewSettings();
+    });
+
+    $("btnFontSizeUp").addEventListener("click", () => {
+      state.fontSizeOffset = Math.min(10, state.fontSizeOffset + 1);
+      $("fontSizeDisplay").value = state.fontSizeOffset;
+      applyPreviewSettings();
+    });
+
+    $("titleColor").addEventListener("input", (e) => {
+      state.titleColor = e.target.value;
+      applyPreviewSettings();
+    });
+
+    $("subtitleColor").addEventListener("input", (e) => {
+      state.subtitleColor = e.target.value;
+      applyPreviewSettings();
+    });
+
+
+    $("btnSpacingDown").addEventListener("click", () => {
+      state.spacingOffset = Math.max(-5, state.spacingOffset - 1);
+      $("spacingDisplay").value = state.spacingOffset;
+      applyPreviewSettings();
+    });
+
+    $("btnSpacingUp").addEventListener("click", () => {
+      state.spacingOffset = Math.min(10, state.spacingOffset + 1);
+      $("spacingDisplay").value = state.spacingOffset;
+      applyPreviewSettings();
+    });
+
+    // Inicializar controles
+    $("fontSizeDisplay").value = state.fontSizeOffset;
+    $("spacingDisplay").value = state.spacingOffset;
+    $("titleColor").value = state.titleColor;
+    $("subtitleColor").value = state.subtitleColor;
 
     // Inicial
     setBusy(false);
