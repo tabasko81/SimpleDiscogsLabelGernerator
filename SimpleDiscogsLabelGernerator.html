@@ -571,6 +571,7 @@
           <button id="btnStart" class="primary">Verify token + Load collection</button>
           <button id="btnGenerate" class="primary">Generate labels</button>
           <button id="btnExport">Export HTML</button>
+          <button id="btnExportList">Export Release List</button>
         </div>
 
         <div class="statusRow" id="statusRow">
@@ -1014,15 +1015,20 @@
       const rows = tracks.map((t, idx) => {
         const pos = t.position || "";
         const title = t.title || "";
+        const artist = t.artist || "";
         const dur = t.duration || "";
         const bpm = bpmMap[idx] || "";
         const key = keyMap[idx] || "";
         const bpmClass = showBpmKey ? "" : "hidden";
         const keyClass = showBpmKey ? "" : "hidden";
+        
+        // Se há artista, mostra "Artist - Title", senão apenas "Title"
+        const trackDisplay = artist ? `${escapeHtml(artist)} - ${escapeHtml(title)}` : escapeHtml(title);
+        
         return `
           <tr>
             <td class="track-position">${escapeHtml(pos)}</td>
-            <td class="track-title" title="${escapeHtml(title)}">${escapeHtml(title)}</td>
+            <td class="track-title" title="${artist ? escapeHtml(artist) + ' - ' : ''}${escapeHtml(title)}">${trackDisplay}</td>
             <td class="track-bpm ${bpmClass}" contenteditable="true" data-release-id="${releaseId}" data-track-index="${idx}" data-field="bpm">${escapeHtml(bpm)}</td>
             <td class="track-key ${keyClass}" contenteditable="true" data-release-id="${releaseId}" data-track-index="${idx}" data-field="key">${escapeHtml(key)}</td>
             <td class="track-duration">${escapeHtml(dur)}</td>
@@ -1360,15 +1366,20 @@
         const rows = tracks.map((t, idx) => {
           const pos = t.position || "";
           const trackTitle = t.title || "";
+          const trackArtist = t.artist || "";
           const dur = t.duration || "";
           const bpm = bpmMap[idx] || "";
           const key = keyMap[idx] || "";
           const bpmClass = showBpmKey ? "" : "hidden";
           const keyClass = showBpmKey ? "" : "hidden";
+          
+          // Se há artista, mostra "Artist - Title", senão apenas "Title"
+          const trackDisplay = trackArtist ? `${escapeHtml(trackArtist)} - ${escapeHtml(trackTitle)}` : escapeHtml(trackTitle);
+          
           return `
             <tr>
               <td class="track-position">${escapeHtml(pos)}</td>
-              <td class="track-title">${escapeHtml(trackTitle)}</td>
+              <td class="track-title">${trackDisplay}</td>
               <td class="track-bpm ${bpmClass}">${escapeHtml(bpm)}</td>
               <td class="track-key ${keyClass}">${escapeHtml(key)}</td>
               <td class="track-duration">${escapeHtml(dur)}</td>
@@ -1432,10 +1443,57 @@
       setStatus("Export complete (HTML file downloaded).", "ok");
     }
 
+    function exportReleaseList() {
+      if (!state.releases.length) {
+        setStatus("No releases loaded. Load your collection first.", "err");
+        return;
+      }
+
+      const selected = Array.from(state.selected);
+      if (!selected.length) {
+        setStatus("No releases selected.", "err");
+        return;
+      }
+
+      // Gerar lista no formato: "Artist" - "Release" ["Cat. number"] (year)
+      const lines = [];
+      for (const releaseId of selected) {
+        const item = state.releases.find(r => r.basic_information?.id === releaseId);
+        if (!item) continue;
+
+        const basic = item.basic_information;
+        const artists = (basic.artists || []).map(a => a.name).filter(Boolean).join(", ") || "Unknown Artist";
+        const title = basic.title || "Unknown Title";
+        const year = basic.year ? String(basic.year) : "";
+        const catno = (basic.labels || []).map(l => l.catno).filter(Boolean)[0] || "";
+
+        let line = `${artists} - ${title}`;
+        if (catno) line += ` [${catno}]`;
+        if (year) line += ` (${year})`;
+        
+        lines.push(line);
+      }
+
+      // Criar e baixar arquivo de texto
+      const content = lines.join("\n");
+      const blob = new Blob([content], { type: "text/plain;charset=utf-8" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      const ts = new Date().toISOString().slice(0,10);
+      a.href = url;
+      a.download = `discogs_release_list_${ts}.txt`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+      setStatus(`Release list exported: ${lines.length} releases.`, "ok");
+    }
+
     // Wire UI
     $("btnStart").addEventListener("click", startVerifyAndLoad);
     $("btnGenerate").addEventListener("click", generateLabels);
     $("btnExport").addEventListener("click", exportHtml);
+    $("btnExportList").addEventListener("click", exportReleaseList);
 
     $("filter").addEventListener("input", renderReleaseList);
     $("releaseList").addEventListener("click", (e) => {
